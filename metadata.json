@@ -1,0 +1,6 @@
+{
+  "name": "Puzzle Macerası",
+  "description": "Çocuklar için sevimli hayvanlar, manzaralar, ev, okul, park ve bahçe temalı renkli puzzle oyunu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
