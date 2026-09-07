@@ -142,7 +142,7 @@ export function GameApp() {
   }
 
   return (
-    <main className="min-h-screen w-full px-2 py-2 sm:px-6 sm:py-6 overscroll-none overflow-x-hidden">
+    <main className="min-h-screen w-full px-2 py-2 sm:px-6 sm:py-6 overflow-x-hidden touch-pan-y">
       <Scenery />
 
       {screen.name === "menu" && (
@@ -286,11 +286,14 @@ interface WebkitHTMLElement extends HTMLElement {
 
 function FullscreenButton() {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showIosTip, setShowIosTip] = useState(false);
 
   useEffect(() => {
     const check = () => {
       const doc = document as WebkitDocument;
-      setIsFullscreen(Boolean(doc.fullscreenElement || doc.webkitFullscreenElement));
+      const nativeFs = Boolean(doc.fullscreenElement || doc.webkitFullscreenElement);
+      const pseudoFs = document.documentElement.classList.contains("pseudo-fullscreen");
+      setIsFullscreen(nativeFs || pseudoFs);
     };
     document.addEventListener("fullscreenchange", check);
     document.addEventListener("webkitfullscreenchange", check);
@@ -300,34 +303,67 @@ function FullscreenButton() {
     };
   }, []);
 
+  const togglePseudoFullscreen = () => {
+    const isCurrentlyPseudo = document.documentElement.classList.contains("pseudo-fullscreen");
+    const nextState = !isCurrentlyPseudo;
+    document.documentElement.classList.toggle("pseudo-fullscreen", nextState);
+    document.body.classList.toggle("pseudo-fullscreen", nextState);
+    setIsFullscreen(nextState);
+
+    if (nextState) {
+      window.scrollTo(0, 1);
+      setShowIosTip(true);
+      setTimeout(() => setShowIosTip(false), 4500);
+    }
+  };
+
   const toggle = () => {
     const doc = document as WebkitDocument;
     const docEl = document.documentElement as WebkitHTMLElement;
-    if (!doc.fullscreenElement && !doc.webkitFullscreenElement) {
-      if (docEl.requestFullscreen) {
-        docEl.requestFullscreen().catch(() => {});
-      } else if (docEl.webkitRequestFullscreen) {
-        docEl.webkitRequestFullscreen().catch(() => {});
+
+    const hasNativeFs = Boolean(docEl.requestFullscreen || docEl.webkitRequestFullscreen);
+
+    if (hasNativeFs) {
+      if (!doc.fullscreenElement && !doc.webkitFullscreenElement) {
+        if (docEl.requestFullscreen) {
+          docEl.requestFullscreen().catch(() => togglePseudoFullscreen());
+        } else if (docEl.webkitRequestFullscreen) {
+          docEl.webkitRequestFullscreen().catch(() => togglePseudoFullscreen());
+        }
+      } else {
+        if (doc.exitFullscreen) {
+          doc.exitFullscreen().catch(() => {});
+        } else if (doc.webkitExitFullscreen) {
+          doc.webkitExitFullscreen().catch(() => {});
+        }
       }
     } else {
-      if (doc.exitFullscreen) {
-        doc.exitFullscreen().catch(() => {});
-      } else if (doc.webkitExitFullscreen) {
-        doc.webkitExitFullscreen().catch(() => {});
-      }
+      togglePseudoFullscreen();
     }
   };
 
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border-2 border-amber-300 bg-white/95 text-sm sm:text-base font-bold shadow-xs hover:bg-white active:scale-95 transition-transform"
-      title={isFullscreen ? "Tam Ekrandan Çık" : "Tam Ekran"}
-      aria-label="Tam Ekran"
-    >
-      {isFullscreen ? "🗗" : "⛶"}
-    </button>
+    <div className="relative">
+      <button
+        type="button"
+        onClick={toggle}
+        className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border-2 border-amber-300 bg-white/95 text-sm sm:text-base font-bold shadow-xs hover:bg-white active:scale-95 transition-transform"
+        title={isFullscreen ? "Tam Ekrandan Çık" : "Tam Ekran"}
+        aria-label="Tam Ekran"
+      >
+        {isFullscreen ? "🗗" : "⛶"}
+      </button>
+
+      {showIosTip && (
+        <div className="absolute right-0 top-11 z-50 w-64 rounded-xl border-2 border-amber-400 bg-amber-950/95 p-3 text-xs text-white shadow-xl backdrop-blur-md animate-fade-in">
+          <p className="font-bold text-yellow-300">💡 iOS Tam Ekran</p>
+          <p className="mt-1 leading-snug">
+            Sayfa büyütüldü! Tam uygulama görünümü için Safari&apos;de &apos;Paylaş&apos; ➔
+            &apos;Ana Ekrana Ekle&apos; yapabilirsiniz.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 

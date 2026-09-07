@@ -337,14 +337,14 @@ export function PuzzleBoard({
   const hasLoosePieces = Object.keys(loosePieces).length > 0;
 
   return (
-    <div className="flex w-full flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-start lg:gap-5 select-none">
+    <div className="flex w-full flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-start lg:gap-5 select-none touch-pan-y">
       {/* Board */}
       <div className="wood-panel min-w-0 flex-1 p-2 sm:p-4">
         <div className="relative w-full overflow-hidden rounded-2xl bg-amber-50 shadow-inner">
           <svg
             ref={boardRef}
             viewBox={`0 0 ${W} ${H}`}
-            className="block h-auto w-full touch-none select-none"
+            className="block h-auto w-full touch-pan-y select-none"
             onClick={handleBoardClick}
           >
             <defs>
@@ -550,7 +550,7 @@ export function PuzzleBoard({
         </div>
 
         {/* Piece tray: scrollable row on mobile, wrapping grid on tablet/desktop */}
-        <div className="flex max-h-36 overflow-x-auto overflow-y-hidden gap-2.5 p-2 rounded-2xl bg-orange-950/25 sm:max-h-56 sm:flex-wrap sm:justify-center sm:overflow-y-auto lg:max-h-[28rem] touch-pan-x">
+        <div className="flex max-h-36 overflow-x-auto overflow-y-hidden gap-2.5 p-2 rounded-2xl bg-orange-950/25 sm:max-h-56 sm:flex-wrap sm:justify-center sm:overflow-y-auto lg:max-h-[28rem] touch-pan-x touch-pan-y">
           {tray.map((i) => {
             const bbox = bboxes[i];
             const isSelected = selectedPiece === i;
