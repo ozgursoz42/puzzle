@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev --host 0.0.0.0 --port 3000",
-    "build": "vite build",
+    "build": "vite build && vite build --config vite.static.config.ts && cp dist/index.html .output/public/index.html",
+    "build:static": "vite build --config vite.static.config.ts",
     "build:dev": "vite build --mode development",
     "preview": "vite preview --host 0.0.0.0 --port 3000",
     "lint": "eslint .",
