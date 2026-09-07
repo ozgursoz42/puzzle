@@ -66,6 +66,7 @@ export function PuzzleBoard({
     shuffle(Array.from({ length: total }, (_, i) => i)),
   );
   const [drag, setDrag] = useState<DragState | null>(null);
+  const dragRef = useRef<DragState | null>(null);
   const [yellowSnapPiece, setYellowSnapPiece] = useState<number | null>(null);
   const [selectedPiece, setSelectedPiece] = useState<number | null>(null);
   const [hint, setHint] = useState(false);
@@ -79,6 +80,7 @@ export function PuzzleBoard({
     setLocked(Array(total).fill(false));
     setLoosePieces({});
     setTray(shuffle(Array.from({ length: total }, (_, i) => i)));
+    dragRef.current = null;
     setDrag(null);
     setYellowSnapPiece(null);
     setSelectedPiece(null);
@@ -120,8 +122,12 @@ export function PuzzleBoard({
     const r = el.getBoundingClientRect();
     const x = ((clientX - r.left) / r.width) * W;
     const y = ((clientY - r.top) / r.height) * H;
+    const margin = 35; // Generous drop margin around board edges for toddler fingers
     const inside =
-      clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
+      clientX >= r.left - margin &&
+      clientX <= r.right + margin &&
+      clientY >= r.top - margin &&
+      clientY <= r.bottom + margin;
     return { x, y, inside };
   }, []);
 
@@ -144,18 +150,18 @@ export function PuzzleBoard({
       const cellW = W / cols;
       const cellH = H / rows;
 
-      // Magnetic snap threshold: generous for 2-year-olds
-      const snapThreshold = Math.max(cellW * 0.48, 65);
+      // Magnetic snap threshold: generous for mobile touch screens
+      const snapThreshold = Math.max(cellW * 0.58, 72);
 
       if (coords && coords.inside) {
         const dist = Math.hypot(coords.x - targetCenter.x, coords.y - targetCenter.y);
 
-        // Also check if cursor dropped directly inside the correct cell bounds (plus tab margins)
+        // Also check if cursor dropped directly inside the correct cell bounds (plus margins)
         const inCell =
-          coords.x >= bboxes[index].minX &&
-          coords.x <= bboxes[index].maxX &&
-          coords.y >= bboxes[index].minY &&
-          coords.y <= bboxes[index].maxY;
+          coords.x >= bboxes[index].minX - 12 &&
+          coords.x <= bboxes[index].maxX + 12 &&
+          coords.y >= bboxes[index].minY - 12 &&
+          coords.y <= bboxes[index].maxY + 12;
 
         if (dist <= snapThreshold || inCell) {
           // CORRECT: SARI IŞIK + MAGNET SNAP!
@@ -184,7 +190,7 @@ export function PuzzleBoard({
           return;
         }
 
-        // WRONG SPOT on board: Place loosely (parça oturmasın!)
+        // WRONG SPOT on board: Place loosely on board
         sfx.place(soundOn);
         setMistakes((m) => m + 1);
 
@@ -215,43 +221,83 @@ export function PuzzleBoard({
     [toSvgCoords, bboxes, cols, rows, soundOn, finish, mistakes],
   );
 
-  // Drag handlers
+  // Drag handlers: supports both touch and mouse seamlessly
   const startDrag = (index: number, fromLoose: boolean) => (e: React.PointerEvent) => {
     e.preventDefault();
-    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    e.stopPropagation();
     setSelectedPiece(null);
-    setDrag({
+
+    const newDrag: DragState = {
       index,
       startX: e.clientX,
       startY: e.clientY,
       currentX: e.clientX,
       currentY: e.clientY,
       fromLoose,
-    });
+    };
+    dragRef.current = newDrag;
+    setDrag(newDrag);
   };
 
-  const onMove = (e: React.PointerEvent) => {
-    if (!drag) return;
-    e.preventDefault();
-    setDrag((prev) => (prev ? { ...prev, currentX: e.clientX, currentY: e.clientY } : null));
-  };
+  // Global window drag listeners: guarantees smooth tracking on mobile without scroll interruption
+  const isDragging = drag !== null;
+  useEffect(() => {
+    if (!isDragging) return;
 
-  const onUp = (e: React.PointerEvent) => {
-    if (!drag) return;
-    const currentDrag = drag;
-    setDrag(null);
+    // Prevent any browser default touch behavior (scrolling, zooming, elastic bounce) during active drag
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    };
 
-    // If drag distance was very small, treat as a tap/click selection (toddler friendly)
-    const movedDist = Math.hypot(e.clientX - currentDrag.startX, e.clientY - currentDrag.startY);
-    if (movedDist < 8 && !currentDrag.fromLoose) {
-      // Toggle select
-      sfx.click(soundOn);
-      setSelectedPiece((prev) => (prev === currentDrag.index ? null : currentDrag.index));
-      return;
-    }
+    const handlePointerMove = (e: PointerEvent) => {
+      if (!dragRef.current) return;
+      dragRef.current.currentX = e.clientX;
+      dragRef.current.currentY = e.clientY;
+      setDrag({ ...dragRef.current });
+    };
 
-    handlePlacement(currentDrag.index, e.clientX, e.clientY);
-  };
+    const handlePointerUp = (e: PointerEvent) => {
+      const cur = dragRef.current;
+      if (!cur) return;
+
+      dragRef.current = null;
+      setDrag(null);
+
+      const movedDist = Math.hypot(e.clientX - cur.startX, e.clientY - cur.startY);
+      if (movedDist < 10 && !cur.fromLoose) {
+        // Tap/click to select piece (toddler friendly fallback)
+        sfx.click(soundOn);
+        setSelectedPiece((prev) => (prev === cur.index ? null : cur.index));
+        return;
+      }
+
+      handlePlacement(cur.index, e.clientX, e.clientY);
+    };
+
+    const handlePointerCancel = (e: PointerEvent) => {
+      const cur = dragRef.current;
+      if (!cur) return;
+
+      dragRef.current = null;
+      setDrag(null);
+
+      handlePlacement(cur.index, e.clientX, e.clientY);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerCancel);
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerCancel);
+      window.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, [isDragging, handlePlacement, soundOn]);
 
   // Tap on board to place selected piece
   const handleBoardClick = (e: React.MouseEvent) => {
@@ -283,7 +329,7 @@ export function PuzzleBoard({
     if (!coords || !coords.inside) return false;
     const targetCenter = bboxes[drag.index].center;
     const cellW = W / cols;
-    const snapThreshold = Math.max(cellW * 0.48, 65);
+    const snapThreshold = Math.max(cellW * 0.58, 72);
     const dist = Math.hypot(coords.x - targetCenter.x, coords.y - targetCenter.y);
     return dist <= snapThreshold;
   }, [drag, toSvgCoords, bboxes, cols]);
@@ -291,12 +337,7 @@ export function PuzzleBoard({
   const hasLoosePieces = Object.keys(loosePieces).length > 0;
 
   return (
-    <div
-      className="flex w-full flex-col gap-3 lg:flex-row lg:items-start lg:gap-5"
-      onPointerMove={onMove}
-      onPointerUp={onUp}
-      onPointerCancel={() => setDrag(null)}
-    >
+    <div className="flex w-full flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-start lg:gap-5 select-none">
       {/* Board */}
       <div className="wood-panel min-w-0 flex-1 p-2 sm:p-4">
         <div className="relative w-full overflow-hidden rounded-2xl bg-amber-50 shadow-inner">
@@ -464,7 +505,8 @@ export function PuzzleBoard({
                 <g
                   key={`loose-${i}`}
                   transform={`translate(${dx}, ${dy})`}
-                  className="cursor-grab active:cursor-grabbing hover:brightness-105"
+                  className="cursor-grab active:cursor-grabbing hover:brightness-105 touch-none select-none"
+                  style={{ touchAction: "none" }}
                   onPointerDown={startDrag(i, true)}
                 >
                   {/* Floating shadow */}
@@ -497,9 +539,9 @@ export function PuzzleBoard({
       </div>
 
       {/* Tray & Controls */}
-      <div className="wood-panel w-full shrink-0 p-3 sm:p-4 lg:w-64">
+      <div className="wood-panel w-full shrink-0 p-2.5 sm:p-4 lg:w-64">
         <div className="mb-2 flex items-center justify-between">
-          <div className="font-display text-sm font-extrabold text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)] sm:text-base">
+          <div className="font-display text-xs font-extrabold text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)] sm:text-base">
             PARÇALAR · {tray.length}
           </div>
           <div className="rounded-full border-2 border-white/90 bg-gradient-to-b from-amber-400 to-orange-600 px-2.5 py-0.5 font-display text-xs font-extrabold text-white shadow-xs">
@@ -507,8 +549,8 @@ export function PuzzleBoard({
           </div>
         </div>
 
-        {/* Piece tray */}
-        <div className="flex max-h-48 flex-wrap justify-center gap-3 overflow-y-auto rounded-2xl bg-orange-950/25 p-3 sm:max-h-56 lg:max-h-[28rem]">
+        {/* Piece tray: scrollable row on mobile, wrapping grid on tablet/desktop */}
+        <div className="flex max-h-36 overflow-x-auto overflow-y-hidden gap-2.5 p-2 rounded-2xl bg-orange-950/25 sm:max-h-56 sm:flex-wrap sm:justify-center sm:overflow-y-auto lg:max-h-[28rem] touch-pan-x">
           {tray.map((i) => {
             const bbox = bboxes[i];
             const isSelected = selectedPiece === i;
@@ -521,7 +563,8 @@ export function PuzzleBoard({
                 tabIndex={0}
                 aria-label={`Parça ${i + 1}`}
                 onPointerDown={startDrag(i, false)}
-                className={`relative flex h-20 w-24 shrink-0 cursor-grab items-center justify-center rounded-xl bg-amber-100/20 p-1 shadow-md transition-transform hover:scale-105 active:cursor-grabbing sm:h-24 sm:w-28 ${
+                style={{ touchAction: "none" }}
+                className={`touch-none select-none relative flex h-20 w-24 shrink-0 cursor-grab items-center justify-center rounded-xl bg-amber-100/25 p-1 shadow-md transition-transform hover:scale-105 active:cursor-grabbing sm:h-24 sm:w-28 ${
                   isDragging ? "opacity-25" : ""
                 } ${isSelected ? "ring-4 ring-yellow-400 scale-105" : ""}`}
               >
@@ -588,7 +631,7 @@ export function PuzzleBoard({
         )}
 
         {/* Action buttons */}
-        <div className="mt-3 flex items-center justify-between gap-2">
+        <div className="mt-2 flex items-center justify-between gap-2 sm:mt-3">
           <ToyButton tone="grass" size="sm" icon="💡" onClick={useHint} disabled={hintsLeft === 0}>
             {t.hint(hintsLeft)}
           </ToyButton>
@@ -601,13 +644,15 @@ export function PuzzleBoard({
       {/* Floating dragged piece follows cursor / finger */}
       {drag && (
         <div
-          className="pointer-events-none fixed z-50 transition-transform"
+          className="pointer-events-none fixed z-50 select-none touch-none"
           style={{
             left: drag.currentX,
             top: drag.currentY,
-            transform: "translate(-50%, -50%) scale(1.08)",
-            filter: "drop-shadow(0 14px 22px rgba(0,0,0,0.45))",
-            width: `${Math.min(140, Math.max(90, bboxes[drag.index].width * 0.28))}px`,
+            // Offset Y slightly upwards (-65%) so finger doesn't block the piece view!
+            transform: "translate(-50%, -65%) scale(1.12)",
+            filter:
+              "drop-shadow(0 16px 26px rgba(0,0,0,0.55)) drop-shadow(0 0 16px rgba(251,191,36,0.65))",
+            width: `${Math.min(160, Math.max(88, bboxes[drag.index].width * (boardRef.current ? boardRef.current.clientWidth / W : 0.5) * 1.1))}px`,
             aspectRatio: `${bboxes[drag.index].width} / ${bboxes[drag.index].height}`,
           }}
         >
@@ -625,12 +670,12 @@ export function PuzzleBoard({
                 preserveAspectRatio="xMidYMid slice"
               />
             </g>
-            <path d={piecePaths[drag.index]} fill="none" stroke="#ffffff" strokeWidth="2.5" />
+            <path d={piecePaths[drag.index]} fill="none" stroke="#ffffff" strokeWidth="3" />
             <path
               d={piecePaths[drag.index]}
               fill="none"
-              stroke="rgba(40, 25, 10, 0.5)"
-              strokeWidth="1.2"
+              stroke="rgba(234, 88, 12, 0.7)"
+              strokeWidth="1.5"
             />
           </svg>
         </div>

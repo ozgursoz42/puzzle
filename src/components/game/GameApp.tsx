@@ -142,7 +142,7 @@ export function GameApp() {
   }
 
   return (
-    <main className="min-h-screen px-3 py-4 sm:px-6 sm:py-6">
+    <main className="min-h-screen w-full px-2 py-2 sm:px-6 sm:py-6 overscroll-none overflow-x-hidden">
       <Scenery />
 
       {screen.name === "menu" && (
@@ -275,6 +275,62 @@ export function GameApp() {
 
 /* ---------------- Screens ---------------- */
 
+interface WebkitDocument extends Document {
+  webkitFullscreenElement?: Element | null;
+  webkitExitFullscreen?: () => Promise<void>;
+}
+
+interface WebkitHTMLElement extends HTMLElement {
+  webkitRequestFullscreen?: () => Promise<void>;
+}
+
+function FullscreenButton() {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const check = () => {
+      const doc = document as WebkitDocument;
+      setIsFullscreen(Boolean(doc.fullscreenElement || doc.webkitFullscreenElement));
+    };
+    document.addEventListener("fullscreenchange", check);
+    document.addEventListener("webkitfullscreenchange", check);
+    return () => {
+      document.removeEventListener("fullscreenchange", check);
+      document.removeEventListener("webkitfullscreenchange", check);
+    };
+  }, []);
+
+  const toggle = () => {
+    const doc = document as WebkitDocument;
+    const docEl = document.documentElement as WebkitHTMLElement;
+    if (!doc.fullscreenElement && !doc.webkitFullscreenElement) {
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen().catch(() => {});
+      } else if (docEl.webkitRequestFullscreen) {
+        docEl.webkitRequestFullscreen().catch(() => {});
+      }
+    } else {
+      if (doc.exitFullscreen) {
+        doc.exitFullscreen().catch(() => {});
+      } else if (doc.webkitExitFullscreen) {
+        doc.webkitExitFullscreen().catch(() => {});
+      }
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border-2 border-amber-300 bg-white/95 text-sm sm:text-base font-bold shadow-xs hover:bg-white active:scale-95 transition-transform"
+      title={isFullscreen ? "Tam Ekrandan Çık" : "Tam Ekran"}
+      aria-label="Tam Ekran"
+    >
+      {isFullscreen ? "🗗" : "⛶"}
+    </button>
+  );
+}
+
 function TopBar({
   title,
   stars,
@@ -292,18 +348,19 @@ function TopBar({
 }) {
   const langObj = currentLang ? ALL_LANGUAGES.find((l) => l.id === currentLang) : null;
   return (
-    <header className="mx-auto mb-3 max-w-6xl">
-      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-4">
+    <header className="mx-auto mb-2 sm:mb-3 max-w-6xl">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1.5 sm:gap-4">
         {onBack ? <BackButton onClick={onBack} /> : <span />}
         <div className="flex min-w-0 justify-center">
           <WoodTitle>{title}</WoodTitle>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <FullscreenButton />
           {onOpenLang && langObj ? (
             <button
               type="button"
               onClick={onOpenLang}
-              className="flex items-center gap-1 rounded-xl border-2 border-amber-300 bg-white/95 px-2.5 py-1.5 font-display text-xs font-black text-amber-950 shadow-xs hover:bg-white active:scale-95"
+              className="flex items-center gap-1 rounded-xl border-2 border-amber-300 bg-white/95 px-2 py-1 sm:px-2.5 sm:py-1.5 font-display text-xs font-black text-amber-950 shadow-xs hover:bg-white active:scale-95"
               title="Change Language / Dil Değiştir"
             >
               <span>{langObj.flag}</span>
@@ -313,7 +370,7 @@ function TopBar({
           <StarBadge count={stars} />
         </div>
       </div>
-      {children ? <div className="mt-2 flex justify-center">{children}</div> : null}
+      {children ? <div className="mt-1.5 sm:mt-2 flex justify-center">{children}</div> : null}
     </header>
   );
 }
@@ -356,7 +413,10 @@ function Menu({
           <span>{langObj?.flag}</span>
           <span>{langObj?.nativeName || "Language"}</span>
         </button>
-        <StarBadge count={stars} />
+        <div className="flex items-center gap-2">
+          <FullscreenButton />
+          <StarBadge count={stars} />
+        </div>
       </div>
 
       <div className="wood-panel animate-pop-in px-5 py-4 sm:px-10 sm:py-6">
