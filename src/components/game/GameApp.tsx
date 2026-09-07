@@ -437,7 +437,7 @@ function Menu({
   const langObj = ALL_LANGUAGES.find((l) => l.id === currentLang);
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 py-3 text-center sm:gap-6 sm:py-4">
+    <div className="mx-auto flex max-w-4xl flex-col items-center gap-3 py-2 text-center sm:gap-5 sm:py-4 landscape:py-1">
       {/* Top action row */}
       <div className="flex w-full items-center justify-between">
         <button
@@ -455,46 +455,56 @@ function Menu({
         </div>
       </div>
 
-      <div className="wood-panel animate-pop-in px-5 py-4 sm:px-10 sm:py-6">
-        <p className="font-display text-sm font-extrabold tracking-widest text-amber-100 sm:text-base">
-          {t.forKids}
-        </p>
-        <h1 className="font-display text-4xl font-extrabold leading-none text-white drop-shadow-[0_4px_0_rgba(0,0,0,0.4)] sm:text-6xl">
-          {t.puzzle}
-        </h1>
-        <h2 className="font-display text-2xl font-extrabold tracking-wide text-amber-300 drop-shadow-[0_3px_0_rgba(180,83,9,0.7)] sm:text-4xl">
-          {t.adventure}
-        </h2>
-      </div>
+      <div className="grid w-full gap-3 sm:gap-4 landscape:grid-cols-2 landscape:items-center">
+        {/* Left column in landscape: Title, Difficulty & Progress */}
+        <div className="flex flex-col items-center gap-2.5 sm:gap-3">
+          <div className="wood-panel animate-pop-in w-full px-4 py-3 sm:px-8 sm:py-5">
+            <p className="font-display text-xs font-extrabold tracking-widest text-amber-100 sm:text-base">
+              {t.forKids}
+            </p>
+            <h1 className="font-display text-3xl font-extrabold leading-none text-white drop-shadow-[0_4px_0_rgba(0,0,0,0.4)] sm:text-6xl">
+              {t.puzzle}
+            </h1>
+            <h2 className="font-display text-xl font-extrabold tracking-wide text-amber-300 drop-shadow-[0_3px_0_rgba(180,83,9,0.7)] sm:text-4xl">
+              {t.adventure}
+            </h2>
+          </div>
 
-      {/* Difficulty Selector */}
-      <div className="flex flex-col items-center gap-1.5">
-        <span className="font-display text-xs font-black tracking-wider text-amber-900 drop-shadow-xs">
-          {t.selectDifficulty}
-        </span>
-        <DifficultyTabs current={difficulty} t={t} onChange={onDifficultyChange} />
-      </div>
+          <div className="flex flex-col items-center gap-1">
+            <span className="font-display text-xs font-black tracking-wider text-amber-900 drop-shadow-xs">
+              {t.selectDifficulty}
+            </span>
+            <DifficultyTabs current={difficulty} t={t} onChange={onDifficultyChange} />
+          </div>
 
-      <div className="grid w-full max-w-sm gap-3 sm:max-w-md">
-        <ToyButton tone="leaf" size="lg" icon="▶️" onClick={() => onGo({ name: "categories" })}>
-          {t.play}
-        </ToyButton>
-        <ToyButton tone="sky" size="lg" icon="🧩" onClick={() => onGo({ name: "categories" })}>
-          {t.levels}
-        </ToyButton>
-        <ToyButton tone="berry" size="lg" icon="⭐" onClick={() => onGo({ name: "achievements" })}>
-          {t.achievements}
-        </ToyButton>
-        <ToyButton tone="grape" size="lg" icon="⚙️" onClick={() => onGo({ name: "settings" })}>
-          {t.settings}
-        </ToyButton>
-      </div>
+          <div className="cream-panel flex w-full items-center gap-3 px-3.5 py-2 text-left">
+            <span className="text-2xl sm:text-3xl">🧩</span>
+            <p className="font-display text-xs font-bold text-amber-950 sm:text-base">
+              {t.completedSummary(diffInfo.label, diffDone, allStars)}
+            </p>
+          </div>
+        </div>
 
-      <div className="cream-panel flex max-w-md items-center gap-3 px-4 py-3 text-left">
-        <span className="text-3xl">🧩</span>
-        <p className="font-display text-sm font-bold text-amber-950 sm:text-base">
-          {t.completedSummary(diffInfo.label, diffDone, allStars)}
-        </p>
+        {/* Right column in landscape: Navigation Buttons */}
+        <div className="grid w-full gap-2 sm:gap-3">
+          <ToyButton tone="leaf" size="lg" icon="▶️" onClick={() => onGo({ name: "categories" })}>
+            {t.play}
+          </ToyButton>
+          <ToyButton tone="sky" size="lg" icon="🧩" onClick={() => onGo({ name: "categories" })}>
+            {t.levels}
+          </ToyButton>
+          <ToyButton
+            tone="berry"
+            size="lg"
+            icon="⭐"
+            onClick={() => onGo({ name: "achievements" })}
+          >
+            {t.achievements}
+          </ToyButton>
+          <ToyButton tone="grape" size="lg" icon="⚙️" onClick={() => onGo({ name: "settings" })}>
+            {t.settings}
+          </ToyButton>
+        </div>
       </div>
     </div>
   );
@@ -532,7 +542,7 @@ function Categories({
       >
         <DifficultyTabs current={difficulty} t={t} onChange={onDifficultyChange} />
       </TopBar>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 landscape:grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
         {CATEGORIES.map((c: Category) => {
           const p = progressOf(c.id);
           const localizedName = t.categories[c.id as keyof typeof t.categories] || c.name;
@@ -549,7 +559,7 @@ function Categories({
                   loading="lazy"
                   width={1024}
                   height={768}
-                  className="h-32 w-full object-cover transition-transform duration-300 group-hover:scale-105 sm:h-40"
+                  className="h-28 landscape:h-28 sm:h-40 w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
               <div className="mt-2 rounded-xl bg-white/95 px-3 py-2 shadow-xs">
@@ -616,7 +626,7 @@ function PuzzleList({
       >
         <DifficultyTabs current={difficulty} t={t} onChange={onDifficultyChange} />
       </TopBar>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 landscape:grid-cols-4 sm:grid-cols-3 lg:grid-cols-4 sm:gap-3">
         {cat.puzzles.map((p, i) => {
           const open = unlocked(i);
           const s = starsOf(p.id);
@@ -641,7 +651,7 @@ function PuzzleList({
                   loading="lazy"
                   width={1024}
                   height={768}
-                  className={`h-24 w-full object-cover sm:h-32 transition-all ${
+                  className={`h-20 landscape:h-24 sm:h-32 w-full object-cover transition-all ${
                     open ? "" : "brightness-[0.85] contrast-95 saturate-[0.9]"
                   }`}
                 />
@@ -772,7 +782,7 @@ function PlayScreen({
             }}
           >
             <div
-              className="wood-panel animate-pop-in relative w-full max-w-md p-5 text-center shadow-2xl sm:p-6"
+              className="wood-panel animate-pop-in relative w-full max-w-md max-h-[92dvh] overflow-y-auto p-4 text-center shadow-2xl sm:p-6"
               onClick={(e) => e.stopPropagation()}
             >
               <button
@@ -789,7 +799,7 @@ function PlayScreen({
                 alt={puzzle.title}
                 width={1024}
                 height={768}
-                className="mx-auto h-36 w-full rounded-2xl border-4 border-white/90 object-cover shadow-md sm:h-44"
+                className="mx-auto h-28 landscape:h-28 sm:h-44 w-full rounded-2xl border-4 border-white/90 object-cover shadow-md"
               />
               <h2 className="font-display mt-3 text-3xl font-extrabold text-white drop-shadow-[0_3px_0_rgba(180,83,9,0.7)] sm:text-4xl">
                 {t.congratsTitle}
@@ -874,7 +884,7 @@ function Achievements({
         {done} {t.puzzle} · {stars} ⭐
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 landscape:grid-cols-4 sm:grid-cols-4">
         {ACHIEVEMENTS.map((a) => {
           const earned = badges.includes(a.id);
           return (
@@ -882,7 +892,7 @@ function Achievements({
               key={a.id}
               className={`cream-panel p-3 text-center ${earned ? "" : "opacity-60 grayscale"}`}
             >
-              <div className="text-4xl">{a.icon}</div>
+              <div className="text-3xl sm:text-4xl">{a.icon}</div>
               <div className="font-display text-sm font-extrabold text-amber-950 sm:text-base">
                 {a.title}
               </div>
@@ -894,11 +904,11 @@ function Achievements({
         })}
       </div>
 
-      <h3 className="font-display mt-6 text-center text-xl font-extrabold text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)] sm:text-2xl">
+      <h3 className="font-display mt-5 text-center text-xl font-extrabold text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)] sm:text-2xl">
         {t.stickerShop}
       </h3>
 
-      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="mt-2.5 grid grid-cols-2 gap-2.5 landscape:grid-cols-4 sm:grid-cols-3 lg:grid-cols-4">
         {STICKERS.map((s) => {
           const owned = unlockedStickers.includes(s.id);
           const affordable = stars >= s.cost;
@@ -985,7 +995,7 @@ function Settings({
   return (
     <div className="mx-auto max-w-2xl">
       <TopBar title={t.settings} stars={stars} onBack={onBack} />
-      <div className="grid gap-3">
+      <div className="grid gap-2.5 sm:gap-3 landscape:grid-cols-2">
         {/* Language Selection Row */}
         <div className="cream-panel flex items-center justify-between gap-3 px-4 py-3">
           <span className="font-display flex min-w-0 items-center gap-2 text-base font-extrabold text-amber-950 sm:text-lg">
@@ -1018,7 +1028,7 @@ function Settings({
           t={t}
           onToggle={() => onChange({ animations: !settings.animations })}
         />
-        <div className="cream-panel px-4 py-3">
+        <div className="cream-panel px-4 py-3 landscape:col-span-2">
           <div className="font-display mb-2 flex items-center gap-2 text-base font-extrabold text-amber-950 sm:text-lg">
             <span className="text-2xl">🧩</span> {t.difficulty}
           </div>
@@ -1040,7 +1050,7 @@ function Settings({
         </div>
 
         {/* Reset Progress Section */}
-        <div className="cream-panel flex flex-col gap-2 p-4">
+        <div className="cream-panel flex flex-col gap-2 p-4 landscape:col-span-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-2.5">
               <span className="text-2xl sm:text-3xl">🔄</span>

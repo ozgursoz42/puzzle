@@ -337,14 +337,14 @@ export function PuzzleBoard({
   const hasLoosePieces = Object.keys(loosePieces).length > 0;
 
   return (
-    <div className="flex w-full flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-start lg:gap-5 select-none touch-pan-y">
+    <div className="flex w-full flex-col gap-2 sm:gap-3 landscape:flex-row landscape:items-start lg:flex-row lg:items-start lg:gap-4 select-none touch-pan-y max-w-full overflow-hidden">
       {/* Board */}
-      <div className="wood-panel min-w-0 flex-1 p-2 sm:p-4">
-        <div className="relative w-full overflow-hidden rounded-2xl bg-amber-50 shadow-inner">
+      <div className="wood-panel min-w-0 flex-1 p-1.5 sm:p-3 flex flex-col items-center justify-center">
+        <div className="relative w-full overflow-hidden rounded-2xl bg-amber-50 shadow-inner flex items-center justify-center">
           <svg
             ref={boardRef}
             viewBox={`0 0 ${W} ${H}`}
-            className="block h-auto w-full touch-pan-y select-none"
+            className="block h-auto w-full max-h-[70vh] landscape:max-h-[calc(100dvh-4.5rem)] touch-pan-y select-none mx-auto object-contain"
             onClick={handleBoardClick}
           >
             <defs>
@@ -539,8 +539,8 @@ export function PuzzleBoard({
       </div>
 
       {/* Tray & Controls */}
-      <div className="wood-panel w-full shrink-0 p-2.5 sm:p-4 lg:w-64">
-        <div className="mb-2 flex items-center justify-between">
+      <div className="wood-panel w-full shrink-0 p-2 sm:p-3 landscape:w-56 landscape:sm:w-64 lg:w-64 flex flex-col justify-between">
+        <div className="mb-1.5 flex items-center justify-between">
           <div className="font-display text-xs font-extrabold text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)] sm:text-base">
             PARÇALAR · {tray.length}
           </div>
@@ -549,8 +549,8 @@ export function PuzzleBoard({
           </div>
         </div>
 
-        {/* Piece tray: scrollable row on mobile, wrapping grid on tablet/desktop */}
-        <div className="flex max-h-36 overflow-x-auto overflow-y-hidden gap-2.5 p-2 rounded-2xl bg-orange-950/25 sm:max-h-56 sm:flex-wrap sm:justify-center sm:overflow-y-auto lg:max-h-[28rem] touch-pan-x touch-pan-y">
+        {/* Piece tray: scrollable row in mobile portrait, wrapping vertical list in landscape/tablet */}
+        <div className="flex max-h-32 sm:max-h-52 overflow-x-auto overflow-y-hidden gap-2 p-1.5 rounded-2xl bg-orange-950/25 sm:flex-wrap sm:justify-center sm:overflow-y-auto landscape:max-h-[calc(100dvh-9.5rem)] landscape:overflow-y-auto landscape:overflow-x-hidden landscape:flex-wrap landscape:justify-center lg:max-h-[28rem] touch-pan-x touch-pan-y">
           {tray.map((i) => {
             const bbox = bboxes[i];
             const isSelected = selectedPiece === i;
@@ -564,7 +564,7 @@ export function PuzzleBoard({
                 aria-label={`Parça ${i + 1}`}
                 onPointerDown={startDrag(i, false)}
                 style={{ touchAction: "none" }}
-                className={`touch-none select-none relative flex h-20 w-24 shrink-0 cursor-grab items-center justify-center rounded-xl bg-amber-100/25 p-1 shadow-md transition-transform hover:scale-105 active:cursor-grabbing sm:h-24 sm:w-28 ${
+                className={`touch-none select-none relative flex h-16 w-20 sm:h-22 sm:w-26 shrink-0 cursor-grab items-center justify-center rounded-xl bg-amber-100/25 p-1 shadow-md transition-transform hover:scale-105 active:cursor-grabbing ${
                   isDragging ? "opacity-25" : ""
                 } ${isSelected ? "ring-4 ring-yellow-400 scale-105" : ""}`}
               >
