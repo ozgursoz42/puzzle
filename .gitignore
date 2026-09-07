@@ -20,6 +20,11 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Temporary and raw asset generation output
+src/assets/images/
+test_balloon.jpg
+*.tmp
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

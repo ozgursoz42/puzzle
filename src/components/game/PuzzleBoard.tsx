@@ -8,6 +8,7 @@ import {
   getJigsawEdges,
 } from "@/game/jigsaw";
 import { ToyButton } from "./ui";
+import { getI18n } from "@/game/i18n";
 
 type Props = {
   puzzle: Puzzle;
@@ -15,6 +16,7 @@ type Props = {
   rows: number;
   animations: boolean;
   soundOn: boolean;
+  lang?: string;
   onComplete: (stars: number) => void;
 };
 
@@ -44,9 +46,18 @@ type LoosePiece = {
   y: number;
 };
 
-export function PuzzleBoard({ puzzle, cols, rows, animations, soundOn, onComplete }: Props) {
+export function PuzzleBoard({
+  puzzle,
+  cols,
+  rows,
+  animations,
+  soundOn,
+  lang = "en",
+  onComplete,
+}: Props) {
   const total = cols * rows;
   const boardRef = useRef<SVGSVGElement>(null);
+  const t = getI18n(lang);
 
   // States
   const [locked, setLocked] = useState<boolean[]>(() => Array(total).fill(false));
@@ -323,7 +334,7 @@ export function PuzzleBoard({ puzzle, cols, rows, animations, soundOn, onComplet
               y="0"
               width={W}
               height={H}
-              preserveAspectRatio="none"
+              preserveAspectRatio="xMidYMid slice"
               style={{
                 filter: hint ? "none" : "grayscale(100%) contrast(1.15) brightness(0.92)",
                 opacity: hint ? 0.88 : 0.48,
@@ -378,7 +389,7 @@ export function PuzzleBoard({ puzzle, cols, rows, animations, soundOn, onComplet
                       y="0"
                       width={W}
                       height={H}
-                      preserveAspectRatio="none"
+                      preserveAspectRatio="xMidYMid slice"
                     />
                   </g>
                   {/* Subtle edge highlight for 3D jigsaw feel */}
@@ -466,7 +477,7 @@ export function PuzzleBoard({ puzzle, cols, rows, animations, soundOn, onComplet
                       y="0"
                       width={W}
                       height={H}
-                      preserveAspectRatio="none"
+                      preserveAspectRatio="xMidYMid slice"
                     />
                   </g>
                   {/* Dashed colored border indicating it is loose / not locked */}
@@ -525,7 +536,7 @@ export function PuzzleBoard({ puzzle, cols, rows, animations, soundOn, onComplet
                       y="0"
                       width={W}
                       height={H}
-                      preserveAspectRatio="none"
+                      preserveAspectRatio="xMidYMid slice"
                     />
                   </g>
                   <path
@@ -551,13 +562,13 @@ export function PuzzleBoard({ puzzle, cols, rows, animations, soundOn, onComplet
 
           {tray.length === 0 && !hasLoosePieces && (
             <div className="p-4 text-center font-display text-base text-cream">
-              Harika! Hepsi yerine oturdu! 🎉
+              {t.congratsTitle} 🎉
             </div>
           )}
 
           {tray.length === 0 && hasLoosePieces && (
             <div className="p-3 text-center font-display text-xs text-amber-200">
-              Tahtadaki yerleşmemiş parçaları doğru yerlerine kaydır! 🧩
+              {t.dragLooseGuide}
             </div>
           )}
         </div>
@@ -565,13 +576,13 @@ export function PuzzleBoard({ puzzle, cols, rows, animations, soundOn, onComplet
         {/* Loose pieces notice and collect button */}
         {hasLoosePieces && (
           <div className="mt-2.5 flex items-center justify-between rounded-xl bg-amber-500/25 px-2.5 py-1.5 text-xs text-cream">
-            <span>Tahtada {Object.keys(loosePieces).length} boşta parça var</span>
+            <span>{t.loosePiecesNotice(Object.keys(loosePieces).length)}</span>
             <button
               type="button"
               onClick={collectToTray}
               className="rounded-lg bg-amber-600 px-2 py-0.5 font-display text-xs text-white hover:bg-amber-500 active:scale-95"
             >
-              Tepsiye Al
+              {t.collectToTray}
             </button>
           </div>
         )}
@@ -579,10 +590,10 @@ export function PuzzleBoard({ puzzle, cols, rows, animations, soundOn, onComplet
         {/* Action buttons */}
         <div className="mt-3 flex items-center justify-between gap-2">
           <ToyButton tone="grass" size="sm" icon="💡" onClick={useHint} disabled={hintsLeft === 0}>
-            İPUCU ({hintsLeft})
+            {t.hint(hintsLeft)}
           </ToyButton>
           <div className="text-right text-xs font-display text-cream/90">
-            {total <= 2 ? "👶 2 Parça" : `${total} Parça`}
+            {t.piecesCount(total)}
           </div>
         </div>
       </div>
@@ -611,7 +622,7 @@ export function PuzzleBoard({ puzzle, cols, rows, animations, soundOn, onComplet
                 y="0"
                 width={W}
                 height={H}
-                preserveAspectRatio="none"
+                preserveAspectRatio="xMidYMid slice"
               />
             </g>
             <path d={piecePaths[drag.index]} fill="none" stroke="#ffffff" strokeWidth="2.5" />

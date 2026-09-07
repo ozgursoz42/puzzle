@@ -14,6 +14,7 @@ export type GameState = {
     sfx: boolean;
     animations: boolean;
     difficulty: Difficulty;
+    language: string;
   };
 };
 
@@ -23,7 +24,13 @@ const initial: GameState = {
   stars: {},
   badges: [],
   unlockedStickers: [],
-  settings: { music: false, sfx: true, animations: true, difficulty: "normal" },
+  settings: {
+    music: false,
+    sfx: true,
+    animations: true,
+    difficulty: "normal",
+    language: "en",
+  },
 };
 
 export function puzzleKey(puzzleId: string, difficulty: Difficulty) {
@@ -205,5 +212,29 @@ export function useGameState() {
 
   const reset = useCallback(() => setState({ ...initial, settings: initial.settings }), []);
 
-  return { state, hydrated, recordResult, unlockSticker, setSettings, reset };
+  const resetProgress = useCallback(() => {
+    try {
+      window.localStorage.removeItem("puzzle-macerasi-v1");
+      window.localStorage.removeItem(KEY);
+    } catch {
+      /* storage unavailable */
+    }
+    setState((prev) => {
+      const resetState: GameState = {
+        ...initial,
+        settings: prev.settings,
+        stars: {},
+        badges: [],
+        unlockedStickers: [],
+      };
+      try {
+        window.localStorage.setItem(KEY, JSON.stringify(resetState));
+      } catch {
+        /* storage unavailable */
+      }
+      return resetState;
+    });
+  }, []);
+
+  return { state, hydrated, recordResult, unlockSticker, setSettings, reset, resetProgress };
 }
